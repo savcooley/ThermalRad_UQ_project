@@ -1,7 +1,7 @@
 # Calibration Data Analysis Script - README
 
 ## Purpose
-This R script compiles calibration data from multiple SI-121 radiometer calibration runs and produces Figure 5 (panels a, b, c) showing the relationship between water bath temperature and measurement variability.
+This R script compiles calibration data from multiple SI-121 radiometer calibration runs and produces a figure showing the relationship between water bath temperature and measurement variability.
 
 ## Required R Packages
 ```r
