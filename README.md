@@ -1,7 +1,7 @@
-# Calibration Data Analysis Script - README
+# Calibration Data Analysis Script - README (CORRECTED)
 
 ## Purpose
-This R script compiles calibration data from multiple SI-121 radiometer calibration runs and produces a figure showing the relationship between water bath temperature and measurement variability.
+This R script compiles calibration data from multiple SI-121 radiometer calibration runs and produces Figure 5 (panels a, b, c) showing the relationship between measurement variability (Chub SD) and water bath temperature.
 
 ## Required R Packages
 ```r
@@ -18,13 +18,14 @@ root_dir <- "/path/to/calibration/data"  # MODIFY THIS PATH
 
 ### 2. Run Script
 ```r
-source("analyze_calibration_data.R")
+source("analyze_calibration_data_CORRECTED.R")
 ```
 
 ### 3. Output Files
 - `Figure_5_calibration_analysis.pdf` - Publication-quality figure
 - `Figure_5_calibration_analysis.png` - High-resolution PNG (300 dpi)
 - `compiled_calibration_data.csv` - Full dataset for additional analysis
+- Console output includes suggested figure caption with actual temperature ranges
 
 ## Directory Structure Expected
 
@@ -47,114 +48,177 @@ root_directory/
 - Files must contain either "HRH" or "HRL" in filename to identify calibration type
 - Script searches recursively through all subfolders
 
-## Excel File Structure Expected
+## Excel File Structure (VERIFIED)
 
-The script expects each `.xlsm` file to have a "results" tab with:
-- **Column G (7th column)**: Chubb Mean (water bath temperature in °C)
+Each `.xlsm` file has a "results" tab with:
+- **Column G (7th column)**: Chubb Mean in centi-degrees C (divide by 100 to get °C)
 - **Column H (8th column)**: Chub SD (standard deviation in °C)
-- **Data starting at row 18** (configurable via `data_start_row` parameter)
+- **Data starting at row 18**
+
+## Chamber Temperatures (VERIFIED)
+
+- **HRH calibrations**: 30°C chamber temperature
+- **HRL calibrations**: 4°C chamber temperature
+
+These are determined automatically from the filename (HRH vs HRL).
 
 ## Figure Description
 
 **Figure 5a (HRH Calibrations):**
+- **X-axis**: Chub SD (°C) - measurement variability
+- **Y-axis**: Water bath temperature (°C)
 - Gray points: Individual measurements
-- Black points: Binned means (1-K bins)
-- Error bars: ±1 SD within each temperature bin
+- Black points: Binned means (binned by Chub SD)
+- Error bars: ±1 SD of temperature within each Chub SD bin
 - Red line: Linear least-squares fit to binned data
-- Y-axis in milliKelvin (mK)
+- Title indicates chamber temperature (30°C)
 
 **Figure 5b (HRL Calibrations):**
+- **X-axis**: Chub SD (°C) - measurement variability
+- **Y-axis**: Water bath temperature (°C)
 - Gray points: Individual measurements
-- Black points: Binned means (1-K bins)
-- Gray shaded region: ±1 SD from binned means
+- Black points: Binned means (binned by Chub SD)
+- Gray shaded region: ±1 SD of temperature from binned means
 - Red line: Linear least-squares fit to binned data
-- Y-axis in milliKelvin (mK)
+- Title indicates chamber temperature (4°C)
 
 **Figure 5c (Data Coverage):**
-- Bar chart showing number of measurements per temperature bin
+- Bar chart showing number of measurements per Chub SD bin
 - Separate bars for HRH (orange) and HRL (blue)
-- Helps assess data density across temperature range
+- Helps assess data density across the Chub SD range
 
-## ASSUMPTIONS AND CLARIFICATIONS NEEDED
+## Data Processing Details
 
-### [CLARIFICATION NEEDED] Data Structure
-1. **Column positions**: Verify that Column G = Chubb Mean and Column H = Chub SD consistently across ALL calibration files
-2. **Data start row**: Script assumes data begins at row 18. Verify this is consistent across all files
-3. **Sheet name**: Script assumes results are in a sheet named "results" (case-sensitive)
+### Key Transformation
+Column G values are divided by 100 to convert from centi-degrees C to degrees C:
+```r
+temp_c = Column_G / 100
+```
 
-### [CLARIFICATION NEEDED] File Identification
-4. **Filename patterns**: Verify that all calibration files contain "cal" in the filename
-5. **HRH/HRL identification**: Confirm that "HRH" and "HRL" appear in filenames (case-insensitive matching is used)
+### Binning Strategy
+Data is binned by Chub SD (X-axis) rather than by temperature. The default bin width is 0.001°C, but this can be adjusted in the script (line 32).
 
-### [CLARIFICATION NEEDED] Analysis Parameters
-6. **Temperature bin width**: Currently set to 1.0 K. Confirm this matches your requirements
-7. **Unit conversion**: Script converts SD from °C to mK (×1000). Verify if this is appropriate
+### Statistics Calculated
+For each Chub SD bin:
+- Mean temperature
+- Standard deviation of temperature
+- Number of measurements
 
-### [CLARIFICATION NEEDED] Temperature Range
-8. The figure caption mentions "temperature range of xxx-zzz K (-4 - 60C)" - after running the script, verify the actual temperature range and update the figure caption accordingly
+## Adjustable Parameters
 
-### [CLARIFICATION NEEDED] Chamber Temperature Context
-9. The figure caption mentions "chamber temperatures at 269.15-303.15 K (-4 C and 30 C)" but the script currently doesn't extract chamber temperature from the files. Is this information:
-   - Documented elsewhere and just provided as context?
-   - Should be extracted from the Excel files (if so, which column)?
-   - Standard values that don't need to be verified for each run?
+### Chub SD Bin Width
+Line 32:
+```r
+bin_width <- 0.001  # Bin width in °C for Chub SD
+```
+You may need to adjust this based on the actual range of Chub SD values in your data. After the first run, check the console output showing "Chub SD range" to determine an appropriate bin width.
+
+### Data Start Row
+Line 29:
+```r
+data_start_row <- 18  # Row where data begins in results tab
+```
+
+## Verification Checklist
+
+Before running, verify your files have:
+- ✓ Column G = Chubb Mean (in centi-°C, needs division by 100)
+- ✓ Column H = Chub SD (in °C)
+- ✓ Data starts at row 18 in "results" tab
+- ✓ "HRH" or "HRL" appears in filename
+- ✓ Folder names match `yyyymmdd_calval` pattern
+
+## Output Interpretation
+
+### Console Output
+The script provides:
+1. Summary of files processed
+2. Temperature and Chub SD ranges for HRH and HRL
+3. Linear regression statistics
+4. **Suggested figure caption** with actual temperature ranges
+
+### Figure Interpretation
+- **Positive slope**: Higher Chub SD associated with higher temperatures
+- **Negative slope**: Higher Chub SD associated with lower temperatures
+- **Scatter around trend line**: Indicates measurement variability
+- **Error bars/shaded regions**: Show uncertainty within each Chub SD bin
 
 ## Troubleshooting
 
 ### "No calibration data found"
-- Check that `root_dir` path is correct
-- Verify folder names match pattern `yyyymmdd_calval`
-- Check that .xlsm files exist and contain "cal" in filename
+- Verify `root_dir` path is correct
+- Check folder names match `yyyymmdd_calval` pattern
+- Ensure .xlsm files exist with "cal" in filename
 
-### "File has fewer than 8 columns"
-- Verify that the "results" tab has at least 8 columns
-- Check if `data_start_row` parameter needs adjustment
+### Unexpected axis ranges
+- Check if Column G needs division by 100 (values should be reasonable temperatures)
+- Verify Column H values are in degrees C (typically 0.001 to 0.1 range)
 
-### Missing or incorrect data
-- Check for NA values in Chubb Mean or Chub SD columns
-- Verify that numeric data is stored as numbers, not text
-- Check if different files have different column structures
+### Too many/too few bins
+- Adjust `bin_width` parameter based on Chub SD range
+- Check console output for Chub SD range
+- Typical values might be 0.001°C, but adjust as needed
 
-### Linear fit warnings
-- If few data points in certain temperature ranges, the linear fit may be unstable
-- Review Figure 5c to identify temperature ranges with sparse data
+### Missing data points
+- Some bins may have zero measurements (normal if Chub SD distribution is sparse)
+- Figure 5c helps identify which bins have sufficient data
 
-## Modifying the Script
+## Expected Results
 
-### Change temperature bin width
-Line 24:
-```r
-bin_width <- 1.0  # Change to desired bin width in K
+Based on typical calibration data:
+- **HRH temperature range**: ~15-63°C
+- **HRL temperature range**: ~-8-26°C  
+- **Chub SD range**: Typically 0.01-0.05°C (but verify with your data)
+
+## Figure Caption Template
+
+After running the script, check the console output for a suggested figure caption with your actual temperature ranges filled in. Example format:
+
+```
+Figure 5. (a),(b) Dependence of water bath temperature on heating
+variability (Chub SD) computed from a large range of calibration runs over
+a temperature range of XXX-YYY K (ZZZ-WWW°C) with chamber temperatures
+at 277.15 K (4°C) for HRL (b) and 303.15 K (30°C) for HRH (a) calibrations.
+The fitted line is a least squares linear fit to the binned data.
+The horizontal lines in (a) and the gray area in (b) are the uncertainty
+estimates computed as the standard deviation from the mean of all calibration
+data obtained within a given Chub SD bin (dots). (c) Number of data points
+used per Chub SD bin.
 ```
 
-### Change data start row
-Line 30:
-```r
-data_start_row <- 18  # Adjust if data starts at different row
-```
+## Modifications
 
-### Modify figure appearance
-Lines 213-280 contain all ggplot2 code for customizing:
-- Point sizes and transparency
+### Change figure aesthetics
+Lines 238-311 contain ggplot2 code for customizing:
+- Point sizes (`size = 1`)
+- Transparency (`alpha = 0.3`)
 - Colors
-- Axis labels
-- Figure dimensions
+- Line widths (`linewidth = 0.8`)
 
-### Export different file formats
-Lines 286-293: Add additional ggsave() calls for other formats (e.g., TIFF, EPS)
+### Export additional formats
+Add to lines 319-324:
+```r
+ggsave("Figure_5_calibration_analysis.tiff", 
+       fig5_combined, 
+       width = 7, height = 10, units = "in", dpi = 600)
+```
 
-## Contact & Support
-
-If the script encounters issues:
-1. Check the console output for specific error messages
-2. Review the assumptions above
-3. Verify your Excel file structure matches expectations
-4. Check that all required R packages are installed
+### Subset by date range
+After line 201, add:
+```r
+all_cal_data <- all_cal_data %>%
+  filter(date >= as.Date("2020-01-01"))
+```
 
 ## Version History
 
+**v2.0** (2025-01-27) - CORRECTED VERSION
+- Fixed axes: X = Chub SD, Y = Temperature
+- Corrected unit conversion: Column G ÷ 100 = °C
+- Removed mK conversion (keep everything in °C)
+- Added chamber temperature column
+- Fixed bin width for Chub SD axis
+- Updated figure caption generation
+
 **v1.0** (2025-01-27)
-- Initial version
-- Compiles HRH and HRL calibration data from multiple runs
-- Generates Figure 5 (a, b, c)
-- Exports compiled dataset as CSV
+- Initial version (had axes reversed - DO NOT USE)
