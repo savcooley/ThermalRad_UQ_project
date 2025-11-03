@@ -1,7 +1,7 @@
 # Calibration Data Analysis Script - README (CORRECTED)
 
 ## Purpose
-This R script compiles calibration data from multiple SI-121 radiometer calibration runs and produces Figure 5 (panels a, b, c) showing the relationship between measurement variability (Chub SD) and water bath temperature.
+These scripts compile calibration data from multiple SI-121 radiometer calibration runs and produce figures showing the relationship between measurement variability (Chub SD) and water bath temperature.
 
 ## Required R Packages
 ```r
